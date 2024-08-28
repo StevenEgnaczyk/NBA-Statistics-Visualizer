@@ -1,0 +1,6 @@
+nba-api
+pandas
+numpy
+matplotlib
+mplcursors
+jupyter
