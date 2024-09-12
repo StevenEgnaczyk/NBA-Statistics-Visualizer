@@ -1,6 +1,6 @@
 from flask import Flask, request, jsonify, send_from_directory, send_file, render_template
 from flask_cors import CORS
-from static.scripts.nba_api import generate_plot
+from scripts.nba_api import generate_plot
 import os
 
 
