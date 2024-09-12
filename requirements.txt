@@ -1,0 +1,8 @@
+Flask
+Flask_Cors
+matplotlib
+mplcursors
+numpy
+pandas
+gunicorn
+nba_api
