@@ -1,8 +1,7 @@
-from flask import Flask, request, jsonify, send_from_directory, send_file, render_template
+from flask import Flask, request, jsonify, send_file
 from flask_cors import CORS
 from scripts.nba_api import generate_plot
 import os
-
 
 app = Flask(__name__)
 CORS(app)  # This enables CORS for all routes
@@ -18,14 +17,13 @@ def submit():
             result = generate_plot(team, stat1, stat2)
         except Exception as e:
             print(e)
+            return jsonify(error="Error generating plot"), 500
         
         return send_file(result, mimetype='image/png')
         
     except Exception as e:
         return jsonify(error=str(e)), 500
 
-def your_function(team, stat1, stat2):
-    return f"Received team: {team}, stat1: {stat1}, stat2: {stat2}"
-
 if __name__ == '__main__':
-    app.run(debug=True, port=5001)
+    port = int(os.getenv('PORT', 5001))  # Use the environment variable for Render
+    app.run(debug=True, port=port)
