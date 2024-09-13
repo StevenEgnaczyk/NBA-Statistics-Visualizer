@@ -8,6 +8,7 @@ CORS(app)  # This enables CORS for all routes
 
 @app.route('/submit', methods=['POST'])
 def submit():
+    return 'Service is Running'
     try:
         team = request.form.get('team')
         stat1 = request.form.get('stat1')
@@ -25,5 +26,5 @@ def submit():
         return jsonify(error=str(e)), 500
 
 if __name__ == '__main__':
-    port = int(os.getenv('PORT', 5001))  # Use the environment variable for Render
+    port = int(os.getenv('PORT', 10000))  # Use the environment variable for Render
     app.run(debug=True, port=port)
