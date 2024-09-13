@@ -7,6 +7,7 @@ import matplotlib
 import matplotlib.pyplot as plt
 import mplcursors
 from io import BytesIO
+import logging
 
 stat_rename_dict = {
         'Points': 'PTS',
@@ -151,35 +152,62 @@ def quadrant_chart(x, y, xtick_labels=None, ytick_labels=None, data_labels=None,
 
     return buf
 
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+
 def generate_plot(nba_team, team_stat, opponent_stat):
+    try:
+        logging.info(f"Starting plot generation for team: {nba_team}, team_stat: {team_stat}, opponent_stat: {opponent_stat}")
+        
+        # Find the home team ID
+        team_info = teams.find_teams_by_full_name(nba_team)
+        if not team_info:
+            logging.error(f"Team {nba_team} not found.")
+            return None
+        team_id = team_info[0]['id']
+        logging.info(f"Team ID for {nba_team}: {team_id}")
+
+        # Get all the games for the home team
+        HomeTeamGameFinder = leaguegamefinder.LeagueGameFinder(team_id_nullable=team_id)
+        AllGames = HomeTeamGameFinder.get_data_frames()[0].dropna().set_index('GAME_ID')
+        logging.info(f"Fetched {len(AllGames)} games for {nba_team}.")
+
+        # HomeTeam WL
+        WinLoss = AllGames['WL']
+        logging.info("Win/Loss data retrieved.")
+
+        # Only care about the selected stat
+        if team_stat not in stat_rename_dict:
+            logging.error(f"Invalid team stat: {team_stat}")
+            return None
+        AllGames = AllGames[stat_rename_dict[team_stat]]
+        AllGames.name = home_team_stat_rename_dict.get(AllGames.name)
+        logging.info(f"Team stat data for {team_stat} extracted.")
+
+        # Fetch game logs for the opponents
+        OpponentTeamGames = leaguegamefinder.LeagueGameFinder(vs_team_id_nullable=team_id)
+        AllOpponentGames = OpponentTeamGames.get_data_frames()[0].dropna().set_index('GAME_ID')
+        logging.info(f"Fetched {len(AllOpponentGames)} games for opponents of {nba_team}.")
+
+        # Only care about the selected stat
+        if opponent_stat not in stat_rename_dict:
+            logging.error(f"Invalid opponent stat: {opponent_stat}")
+            return None
+        AllOpponentGames = AllOpponentGames[stat_rename_dict[opponent_stat]]
+        AllOpponentGames.name = away_team_stat_rename_dict.get(AllOpponentGames.name)
+        logging.info(f"Opponent stat data for {opponent_stat} extracted.")
+
+        # Merge data
+        gameLogs = pd.merge(AllGames, AllOpponentGames, left_index=True, right_index=True)
+        gameLogs = pd.merge(gameLogs, WinLoss, left_index=True, right_index=True)
+        logging.info(f"Successfully merged game data. {len(gameLogs)} games merged.")
+
+        # Generate the plot
+        image = quadrant_chart(gameLogs[AllGames.name], gameLogs[AllOpponentGames.name], result_labels=gameLogs['WL'])
+        logging.info("Quadrant chart generated successfully.")
+        
+        return image
     
-    # Find the home team ID
-    team_info = teams.find_teams_by_full_name(nba_team)
-    team_id = team_info[0]['id']
-
-    # Get all the games for the home team
-    HomeTeamGameFinder = leaguegamefinder.LeagueGameFinder(team_id_nullable=team_id)
-    AllGames = HomeTeamGameFinder.get_data_frames()[0].dropna().set_index('GAME_ID')
-
-    # HomeTeam WL
-    WinLoss = AllGames['WL']
-
-    # Only care about the selected stat
-    AllGames = AllGames[stat_rename_dict[team_stat]]
-    AllGames.name = home_team_stat_rename_dict.get(AllGames.name)
-
-    # Fetch game logs for the opponents
-    OpponentTeamGames = leaguegamefinder.LeagueGameFinder(vs_team_id_nullable = team_id)
-    AllOpponentGames = OpponentTeamGames.get_data_frames()[0].dropna().set_index('GAME_ID')
-
-    # Only care about the selected stat
-    AllOpponentGames = AllOpponentGames[stat_rename_dict[opponent_stat]]
-    AllOpponentGames.name = away_team_stat_rename_dict.get(AllOpponentGames.name)
-
-    gameLogs = pd.merge(AllGames,AllOpponentGames, left_index=True, right_index=True)
-    gameLogs = pd.merge(gameLogs, WinLoss,left_index=True, right_index=True)
-
-    image = quadrant_chart(gameLogs[AllGames.name], gameLogs[AllOpponentGames.name], 
-                result_labels = gameLogs['WL'])
-
-    return image
+    except Exception as e:
+        logging.error(f"Error in generate_plot: {e}", exc_info=True)
+        return None
