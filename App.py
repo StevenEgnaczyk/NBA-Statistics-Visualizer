@@ -7,14 +7,6 @@ import os
 app = Flask(__name__)
 CORS(app)  # This enables CORS for all routes
 
-@app.route('/')
-def home():
-    return render_template('index.html')
-
-@app.route('/projects/nba-api.html')
-def nba_api():
-    return send_from_directory('projects', 'nba-api.html')
-
 @app.route('/submit', methods=['POST'])
 def submit():
     try:
