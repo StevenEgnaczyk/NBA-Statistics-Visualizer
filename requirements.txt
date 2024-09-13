@@ -6,3 +6,4 @@ numpy
 pandas
 gunicorn
 nba_api
+waitress
