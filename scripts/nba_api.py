@@ -199,7 +199,11 @@ def generate_plot(nba_team, team_stat, opponent_stat):
         AllOpponentGames.name = away_team_stat_rename_dict.get(AllOpponentGames.name)
         logging.info(f"Opponent stat data for {opponent_stat} extracted.")
 
-        # Merge data
+        # Remove duplicates
+        AllGames = AllGames[~AllGames.index.duplicated(keep='first')]
+        AllOpponentGames = AllOpponentGames[~AllOpponentGames.index.duplicated(keep='first')]
+        WinLoss = WinLoss[~WinLoss.index.duplicated(keep='first')]
+
         merged_df = pd.concat([AllGames, AllOpponentGames, WinLoss], axis=1)
         merged_df.dropna(inplace=True)
         logging.info(f"Merged DataFrame shape: {merged_df.shape}")
