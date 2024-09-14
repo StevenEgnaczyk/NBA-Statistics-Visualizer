@@ -142,8 +142,8 @@ def generate_plot(nba_team, team_stat, opponent_stat):
     try:
         logging.info(f"Starting plot generation for team: {nba_team}, team_stat: {team_stat}, opponent_stat: {opponent_stat}")
 
-        session = Session()
-        session.proxies.update(proxies)  # Set the proxies for the session
+        # session = Session()
+        # session.proxies.update(proxies)  # Set the proxies for the session
         
         # Get all NBA teams using the official API method
         team_info = teams.get_teams()
@@ -158,7 +158,7 @@ def generate_plot(nba_team, team_stat, opponent_stat):
         logging.info(f"Team ID for {nba_team}: {team_id}")
 
         # Get all games for the home team using NBA API
-        HomeTeamGameFinder = leaguegamefinder.LeagueGameFinder(team_id_nullable=team_id, timeout=90)
+        HomeTeamGameFinder = leaguegamefinder.LeagueGameFinder(team_id_nullable=team_id, timeout=15)
 
         logging.info(HomeTeamGameFinder)
         all_games = HomeTeamGameFinder.get_data_frames()[0]
