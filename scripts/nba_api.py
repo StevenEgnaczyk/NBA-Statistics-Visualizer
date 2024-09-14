@@ -1,3 +1,4 @@
+import nba_api
 from nba_api.stats.static import teams
 from nba_api.stats.endpoints import leaguegamefinder
 import pandas as pd
@@ -156,6 +157,9 @@ def generate_plot(nba_team, team_stat, opponent_stat):
             logging.error(f"Team {nba_team} not found.")
             return None
         logging.info(f"Team ID for {nba_team}: {team_id}")
+
+        logging.info(nba_api.__file__)
+
 
         # Get all games for the home team using NBA API
         HomeTeamGameFinder = leaguegamefinder.LeagueGameFinder(team_id_nullable=team_id, timeout=15)
