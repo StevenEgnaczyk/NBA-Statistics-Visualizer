@@ -5,5 +5,5 @@ mplcursors
 numpy
 pandas
 gunicorn
-nba_api
+-e ./nba_api
 waitress
