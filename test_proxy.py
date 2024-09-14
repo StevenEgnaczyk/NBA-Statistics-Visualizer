@@ -8,7 +8,7 @@ proxy = {
 
 
 try:
-    response = requests.get('https://stats.nba.com/', proxies=proxy, timeout=30)
+    response = requests.get('https://stats.nba.com/stats/leaguegamefinder', timeout=30)
     response.raise_for_status()
     print("Proxy is working!")
     print(response.text[:500])  # Print first 500 characters of the response
