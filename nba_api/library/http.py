@@ -2,6 +2,10 @@ import os
 import json
 import random
 import requests
+import logging
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 from urllib.parse import quote_plus
 
@@ -103,6 +107,9 @@ class NBAHTTP:
             "http": proxy,
             "https": proxy,
         }
+
+        logger.info("Using updated http.py")
+
 
         url = None
         status_code = None
