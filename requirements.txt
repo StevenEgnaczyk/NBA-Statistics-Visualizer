@@ -1,4 +1,5 @@
 Flask
+requests
 Flask_Cors
 matplotlib
 mplcursors
