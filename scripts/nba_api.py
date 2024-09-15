@@ -79,16 +79,62 @@ away_team_stat_rename_dict = {
     'PF': 'OpponentPersonalFouls'
 }
 
+nba_teams_colors = {
+    'Atlanta Hawks': ['#E03A39', '#F1C30F', '#003A6C'],
+    'Boston Celtics': ['#007A33', '#FFFFFF', '#000000'],
+    'Brooklyn Nets': ['#000000', '#FFFFFF', '#BDC0C0'],
+    'Charlotte Hornets': ['#1D1160', '#A1A9B0', '#00B2A9'],
+    'Chicago Bulls': ['#CE1141', '#000000', '#FFFFFF'],
+    'Cleveland Cavaliers': ['#6F263D', '#FFB81C', '#000000'],
+    'Dallas Mavericks': ['#00538C', '#B8C4CA', '#000000'],
+    'Denver Nuggets': ['#0E76A8', '#FEC524', '#B3B3B3'],
+    'Detroit Pistons': ['#006BB6', '#C8102E', '#FFFFFF'],
+    'Golden State Warriors': ['#006BB6', '#FDB927', '#FFFFFF'],
+    'Houston Rockets': ['#CE1141', '#000000', '#A2A9AF'],
+    'Indiana Pacers': ['#002D72', '#F7E03C', '#003F6C'],
+    'LA Clippers': ['#ED0A3F', '#002A5C', '#FFFFFF'],
+    'Los Angeles Lakers': ['#552583', '#F1C40F', '#FFFFFF'],
+    'Memphis Grizzlies': ['#5D76A9', '#121F3E', '#7F8C8D'],
+    'Miami Heat': ['#98002E', '#F9A01B', '#000000'],
+    'Milwaukee Bucks': ['#00471B', '#EEE1C6', '#AB8A5F'],
+    'Minnesota Timberwolves': ['#00471B', '#007A33', '#003A6C'],
+    'New Orleans Pelicans': ['#0C2340', '#006BB6', '#F1C30F'],
+    'New York Knicks': ['#006BB6', '#F68428', '#FFFFFF'],
+    'Oklahoma City Thunder': ['#007AC1', '#F05133', '#F3A800'],
+    'Orlando Magic': ['#0077C0', '#0060A0', '#C4CED4'],
+    'Philadelphia 76ers': ['#006AB6', '#ED174C', '#FFFFFF'],
+    'Phoenix Suns': ['#1D1160', '#E56020', '#F1C40F'],
+    'Portland Trail Blazers': ['#E03A39', '#000000', '#C4CED4'],
+    'Sacramento Kings': ['#5A2D81', '#000000', '#FFFFFF'],
+    'San Antonio Spurs': ['#000000', '#C4CED4', '#E0E0E0'],
+    'Toronto Raptors': ['#C8102E', '#000000', '#6F263D'],
+    'Utah Jazz': ['#002B5C', '#00471B', '#F9A01B'],
+    'Washington Wizards': ['#002F6C', '#E03A39', '#C4CED4'],
+}
+
+
 # Function to create the quadrant chart
-def quadrant_chart(x, y, xtick_labels=None, ytick_labels=None, data_labels=None,
+def quadrant_chart(team_name, x, y, xtick_labels=None, ytick_labels=None, data_labels=None,
                     highlight_quadrants=None, result_labels=None, ax=None, leagueAvg=None):
     matplotlib.use('Agg')
+
     if ax is None:
-        fig, ax = plt.subplots(figsize=(10, 6))
+        fig, ax = plt.subplots(figsize=(12, 8))  # Increased figure size for better space
 
     plt.tight_layout(pad=0.4, w_pad=0.5, h_pad=1.0)
 
+    
+    # Create a DataFrame with the x, y, and result columns
     data = pd.DataFrame({'x': x, 'y': y, 'result': result_labels})
+    
+    # Group by x and y to identify duplicates and calculate counts for Wins and Losses
+    group_data = data.groupby(['x', 'y', 'result']).size().unstack(fill_value=0).reset_index()
+    
+    # Add a total count and calculate the win ratio for color
+    group_data['total_count'] = group_data['W'] + group_data['L']
+    group_data['win_ratio'] = group_data['W'] / group_data['total_count']
+
+    # Set limits for x and y axes
     y_avg = data['y'].mean()
     x_avg = data['x'].mean()
 
@@ -100,6 +146,7 @@ def quadrant_chart(x, y, xtick_labels=None, ytick_labels=None, data_labels=None,
     lb_y, ub_y = (y_avg - adj_y, y_avg + adj_y)
     ax.set_ylim(lb_y, ub_y)
 
+    # Set ticks and labels
     xLabelValues = [lb_x, (x_avg - adj_x / 2), x_avg, (x_avg + adj_x / 2), ub_x]
     xLabels = [np.round(lb_x, 2), np.round((x_avg - adj_x / 2), 2), np.round(x_avg, 2), np.round((x_avg + adj_x / 2), 2), np.round(ub_x, 2)]
 
@@ -114,19 +161,43 @@ def quadrant_chart(x, y, xtick_labels=None, ytick_labels=None, data_labels=None,
         ax.set_yticks(yLabelValues)
         ax.set_yticklabels(yLabels)
 
-    for result, color in zip(['W', 'L'], ['#002D62', '#FDBB30']):
-        subset_data = data[data['result'] == result]
-        ax.scatter(x=subset_data['x'], y=subset_data['y'], linewidth=0.25, edgecolor='blue', c=color, zorder=99, s=15, label=result.upper())
+    # Plot each point in the group_data with size based on total_count and color based on win_ratio
+    for index, row in group_data.iterrows():
+        # Calculate color as a mix of win and loss colors based on the win_ratio
+        win_color = np.array(matplotlib.colors.to_rgb(nba_teams_colors[team_name][0]))  # Win color
+        loss_color = np.array(matplotlib.colors.to_rgb(nba_teams_colors[team_name][1]))  # Loss color
+        mix_color = win_color * row['win_ratio'] + loss_color * (1 - row['win_ratio'])  # Mixed color
 
+        # Scatter plot with size proportional to total_count
+        ax.scatter(x=row['x'], y=row['y'], linewidth=0.5, edgecolor=nba_teams_colors[team_name][2],
+                   color=mix_color, s=20 + row['total_count'] * 10, zorder=99)
+
+    # Add quadrant lines and league average markers
     ax.axvline(x_avg, c='k', lw=1)
     ax.axhline(y_avg, c='k', lw=1)
 
-    ax.scatter(x=leagueAvg, y=leagueAvg, s=10, c='black', label="League Average")
-    ax.plot([lb_x, leagueAvg, ub_x], [lb_y, leagueAvg, ub_y], linestyle='--', color='black')
+    # Dynamically set the x and y axis labels based on the team name and data
+    x_label = f'{team_name} {x.name.split(":")[0].replace("Home", "")}'  # Example: Miami Heat Rebounds
+    y_label = f'{team_name} Opponent {y.name.split(":")[0].replace("Opponent", "")}'  # Example: Miami Heat Opponent Rebounds
 
-    ax.legend()
-    ax.set_facecolor('#BEC0C2')
+    # Add labels for the x-axis and y-axis
+    ax.set_xlabel(x_label, fontsize=14)
+    ax.set_ylabel(y_label, fontsize=14)
+
+    # Set the chart title dynamically using the team name and the names of the Series
+    title = f'{team_name} {x.name.split(":")[0]} vs {y.name.split(":")[0]}'
+    ax.set_title(title, fontsize=16)
+
+    # Add a custom legend explaining Win and Loss mixed color
+    win_patch = plt.Line2D([0], [0], marker='o', color='w', markerfacecolor=nba_teams_colors[team_name][0], markersize=10, label='Win')
+    loss_patch = plt.Line2D([0], [0], marker='o', color='w', markerfacecolor=nba_teams_colors[team_name][1], markersize=10, label='Loss')
+    ax.legend(handles=[win_patch, loss_patch], loc='best', title="Game Results")
+
+    ax.set_facecolor('#999999')
     mplcursors.cursor(hover=True)
+
+    # Adjust subplots to avoid clipping the title, labels, and legend
+    fig.subplots_adjust(top=0.9, bottom=0.1, left=0.1, right=0.9)
 
     buf = BytesIO()
     plt.savefig(buf, format='png', dpi=500)
@@ -142,9 +213,6 @@ def generate_plot(nba_team, team_stat, opponent_stat):
 
     try:
         logging.info(f"Starting plot generation for team: {nba_team}, team_stat: {team_stat}, opponent_stat: {opponent_stat}")
-
-        # session = Session()
-        # session.proxies.update(proxies)  # Set the proxies for the session
         
         # Get all NBA teams using the official API method
         team_info = teams.get_teams()
@@ -216,7 +284,7 @@ def generate_plot(nba_team, team_stat, opponent_stat):
         leagueAvgTeam = x.mean()
         leagueAvgOpponent = y.mean()
 
-        buf = quadrant_chart(x, y, result_labels=result_labels, leagueAvg=leagueAvgTeam)
+        buf = quadrant_chart(nba_team, x, y, result_labels=result_labels, leagueAvg=leagueAvgTeam)
         logging.info(f"Plot successfully generated for team: {nba_team}.")
 
         return buf
