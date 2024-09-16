@@ -112,102 +112,141 @@ nba_teams_colors = {
     'Washington Wizards': ['#002F6C', '#E03A39', '#C4CED4'],
 }
 
+# Configure logging
+logging.basicConfig(level=logging.INFO)
 
 # Function to create the quadrant chart
 def quadrant_chart(team_name, x, y, xtick_labels=None, ytick_labels=None, data_labels=None,
-                    highlight_quadrants=None, result_labels=None, ax=None, leagueAvg=None):
+                   highlight_quadrants=None, result_labels=None, ax=None, leagueAvg=None):
+    logging.info("Starting quadrant_chart function")
+    
     matplotlib.use('Agg')
 
+    # Ensure ax is passed or create one
     if ax is None:
+        logging.debug("No ax provided, creating new figure and axes")
         fig, ax = plt.subplots(figsize=(12, 8))  # Increased figure size for better space
+    else:
+        logging.debug("Using provided ax")
 
     plt.tight_layout(pad=0.4, w_pad=0.5, h_pad=1.0)
 
-    
     # Create a DataFrame with the x, y, and result columns
-    data = pd.DataFrame({'x': x, 'y': y, 'result': result_labels})
-    
-    # Group by x and y to identify duplicates and calculate counts for Wins and Losses
-    group_data = data.groupby(['x', 'y', 'result']).size().unstack(fill_value=0).reset_index()
-    
-    # Add a total count and calculate the win ratio for color
-    group_data['total_count'] = group_data['W'] + group_data['L']
-    group_data['win_ratio'] = group_data['W'] / group_data['total_count']
+    try:
+        logging.debug("Creating DataFrame from x, y, and result labels")
+        data = pd.DataFrame({'x': x, 'y': y, 'result': result_labels})
+    except Exception as e:
+        logging.error(f"Error while creating DataFrame: {e}")
+        raise e
+
+    # Group data and calculate necessary fields
+    try:
+        logging.debug("Grouping data to identify duplicates and calculating win ratios")
+        group_data = data.groupby(['x', 'y', 'result']).size().unstack(fill_value=0).reset_index()
+        group_data['total_count'] = group_data['W'] + group_data['L']
+        group_data['win_ratio'] = group_data['W'] / group_data['total_count']
+    except Exception as e:
+        logging.error(f"Error while processing grouped data: {e}")
+        raise e
 
     # Set limits for x and y axes
-    y_avg = data['y'].mean()
-    x_avg = data['x'].mean()
+    try:
+        logging.debug("Setting x and y axis limits")
+        y_avg = data['y'].mean()
+        x_avg = data['x'].mean()
 
-    adj_x = max((data['x'].max() - x_avg), (x_avg - data['x'].min())) * 1.1
-    lb_x, ub_x = (x_avg - adj_x, x_avg + adj_x)
-    ax.set_xlim(lb_x, ub_x)
+        adj_x = max((data['x'].max() - x_avg), (x_avg - data['x'].min())) * 1.1
+        lb_x, ub_x = (x_avg - adj_x, x_avg + adj_x)
+        ax.set_xlim(lb_x, ub_x)
 
-    adj_y = max((data['y'].max() - y_avg), (y_avg - data['y'].min())) * 1.1
-    lb_y, ub_y = (y_avg - adj_y, y_avg + adj_y)
-    ax.set_ylim(lb_y, ub_y)
+        adj_y = max((data['y'].max() - y_avg), (y_avg - data['y'].min())) * 1.1
+        lb_y, ub_y = (y_avg - adj_y, y_avg + adj_y)
+        ax.set_ylim(lb_y, ub_y)
+    except Exception as e:
+        logging.error(f"Error while setting axis limits: {e}")
+        raise e
 
-    # Set ticks and labels
-    xLabelValues = [lb_x, (x_avg - adj_x / 2), x_avg, (x_avg + adj_x / 2), ub_x]
-    xLabels = [np.round(lb_x, 2), np.round((x_avg - adj_x / 2), 2), np.round(x_avg, 2), np.round((x_avg + adj_x / 2), 2), np.round(ub_x, 2)]
+    # Set tick labels if provided
+    try:
+        if xtick_labels:
+            logging.debug("Setting custom x-axis tick labels")
+            ax.set_xticks([lb_x, (x_avg - adj_x / 2), x_avg, (x_avg + adj_x / 2), ub_x])
+            ax.set_xticklabels([np.round(lb_x, 2), np.round((x_avg - adj_x / 2), 2), np.round(x_avg, 2),
+                                np.round((x_avg + adj_x / 2), 2), np.round(ub_x, 2)])
 
-    if xtick_labels:
-        ax.set_xticks(xLabelValues)
-        ax.set_xticklabels(xLabels)
-
-    yLabelValues = [lb_y, (y_avg - adj_y / 2), y_avg, (y_avg + adj_y / 2), ub_y]
-    yLabels = [np.round(lb_y, 2), np.round((y_avg - adj_y / 2), 2), np.round(y_avg, 2), np.round((y_avg + adj_y / 2), 2), np.round(ub_y, 2)]
-
-    if ytick_labels:
-        ax.set_yticks(yLabelValues)
-        ax.set_yticklabels(yLabels)
+        if ytick_labels:
+            logging.debug("Setting custom y-axis tick labels")
+            ax.set_yticks([lb_y, (y_avg - adj_y / 2), y_avg, (y_avg + adj_y / 2), ub_y])
+            ax.set_yticklabels([np.round(lb_y, 2), np.round((y_avg - adj_y / 2), 2), np.round(y_avg, 2),
+                                np.round((y_avg + adj_y / 2), 2), np.round(ub_y, 2)])
+    except Exception as e:
+        logging.error(f"Error while setting tick labels: {e}")
+        raise e
 
     # Plot each point in the group_data with size based on total_count and color based on win_ratio
-    for index, row in group_data.iterrows():
-        # Calculate color as a mix of win and loss colors based on the win_ratio
-        win_color = np.array(matplotlib.colors.to_rgb(nba_teams_colors[team_name][0]))  # Win color
-        loss_color = np.array(matplotlib.colors.to_rgb(nba_teams_colors[team_name][1]))  # Loss color
-        mix_color = win_color * row['win_ratio'] + loss_color * (1 - row['win_ratio'])  # Mixed color
+    try:
+        logging.debug("Plotting data points on scatter plot")
+        for index, row in group_data.iterrows():
+            win_color = np.array(matplotlib.colors.to_rgb(nba_teams_colors[team_name][0]))  # Win color
+            loss_color = np.array(matplotlib.colors.to_rgb(nba_teams_colors[team_name][1]))  # Loss color
+            mix_color = win_color * row['win_ratio'] + loss_color * (1 - row['win_ratio'])  # Mixed color
 
-        # Scatter plot with size proportional to total_count
-        ax.scatter(x=row['x'], y=row['y'], linewidth=0.5, edgecolor=nba_teams_colors[team_name][2],
-                   color=mix_color, s=20 + row['total_count'] * 10, zorder=99)
+            # Scatter plot with size proportional to total_count
+            ax.scatter(x=row['x'], y=row['y'], linewidth=0.5, edgecolor=nba_teams_colors[team_name][2],
+                       color=mix_color, s=20 + row['total_count'] * 10, zorder=99)
+    except Exception as e:
+        logging.error(f"Error while plotting data points: {e}")
+        raise e
 
     # Add quadrant lines and league average markers
-    ax.axvline(x_avg, c='k', lw=1)
-    ax.axhline(y_avg, c='k', lw=1)
+    try:
+        logging.debug("Adding quadrant lines and league average markers")
+        ax.axvline(x_avg, c='k', lw=1)
+        ax.axhline(y_avg, c='k', lw=1)
+    except Exception as e:
+        logging.error(f"Error while adding quadrant lines: {e}")
+        raise e
 
-    # Dynamically set the x and y axis labels based on the team name and data
-    x_label = f'{team_name} {x.name.split(":")[0].replace("Home", "")}'  # Example: Miami Heat Rebounds
-    y_label = f'{team_name} Opponent {y.name.split(":")[0].replace("Opponent", "")}'  # Example: Miami Heat Opponent Rebounds
+    # Set labels and title
+    try:
+        logging.debug("Setting axis labels and chart title")
+        x_label = f'{team_name} {x.name.split(":")[0].replace("Home", "")}'  # Example: Miami Heat Rebounds
+        y_label = f'{team_name} Opponent {y.name.split(":")[0].replace("Opponent", "")}'  # Example: Miami Heat Opponent Rebounds
+        ax.set_xlabel(x_label, fontsize=14)
+        ax.set_ylabel(y_label, fontsize=14)
+        title = f'{team_name} {x.name.split(":")[0]} vs {y.name.split(":")[0]}'
+        ax.set_title(title, fontsize=16)
+    except Exception as e:
+        logging.error(f"Error while setting labels or title: {e}")
+        raise e
 
-    # Add labels for the x-axis and y-axis
-    ax.set_xlabel(x_label, fontsize=14)
-    ax.set_ylabel(y_label, fontsize=14)
+    # Add custom legend
+    try:
+        logging.debug("Adding custom legend")
+        win_patch = plt.Line2D([0], [0], marker='o', color='w', markerfacecolor=nba_teams_colors[team_name][0], markersize=10, label='Win')
+        loss_patch = plt.Line2D([0], [0], marker='o', color='w', markerfacecolor=nba_teams_colors[team_name][1], markersize=10, label='Loss')
+        ax.legend(handles=[win_patch, loss_patch], loc='best', title="Game Results")
+    except Exception as e:
+        logging.error(f"Error while adding custom legend: {e}")
+        raise e
 
-    # Set the chart title dynamically using the team name and the names of the Series
-    title = f'{team_name} {x.name.split(":")[0]} vs {y.name.split(":")[0]}'
-    ax.set_title(title, fontsize=16)
+    # Finalize plot adjustments
+    try:
+        logging.debug("Finalizing plot and saving to buffer")
+        ax.set_facecolor('#999999')
+        mplcursors.cursor(hover=True)
+        fig.subplots_adjust(top=0.9, bottom=0.1, left=0.1, right=0.9)
 
-    # Add a custom legend explaining Win and Loss mixed color
-    win_patch = plt.Line2D([0], [0], marker='o', color='w', markerfacecolor=nba_teams_colors[team_name][0], markersize=10, label='Win')
-    loss_patch = plt.Line2D([0], [0], marker='o', color='w', markerfacecolor=nba_teams_colors[team_name][1], markersize=10, label='Loss')
-    ax.legend(handles=[win_patch, loss_patch], loc='best', title="Game Results")
+        buf = BytesIO()
+        plt.savefig(buf, format='png', dpi=500)
+        buf.seek(0)
+        plt.close()
+    except Exception as e:
+        logging.error(f"Error while finalizing and saving the plot: {e}")
+        raise e
 
-    ax.set_facecolor('#999999')
-    mplcursors.cursor(hover=True)
-
-    # Adjust subplots to avoid clipping the title, labels, and legend
-    fig.subplots_adjust(top=0.9, bottom=0.1, left=0.1, right=0.9)
-
-    buf = BytesIO()
-    plt.savefig(buf, format='png', dpi=500)
-    buf.seek(0)
-    plt.close()
-
+    logging.info("quadrant_chart function completed successfully")
     return buf
-
-# Configure logging
-logging.basicConfig(level=logging.INFO)
 
 def generate_plot(nba_team, team_stat, opponent_stat):
 
