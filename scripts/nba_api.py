@@ -279,6 +279,7 @@ def generate_plot(nba_team, team_stat, opponent_stat):
         x = merged_df[AllGames.name]
         y = merged_df[AllOpponentGames.name]
         result_labels = merged_df['WL']
+        logging.info(f"Data extracted from merged Dataframe: {nba_team}.")
 
         # Calculate the league average for both stats
         leagueAvgTeam = x.mean()
