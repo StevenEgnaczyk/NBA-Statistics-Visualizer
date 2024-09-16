@@ -124,16 +124,16 @@ def quadrant_chart(team_name, x, y, xtick_labels=None, ytick_labels=None, data_l
 
     # Ensure ax is passed or create one
     if ax is None:
-        logging.debug("No ax provided, creating new figure and axes")
+        logging.info("No ax provided, creating new figure and axes")
         fig, ax = plt.subplots(figsize=(12, 8))  # Increased figure size for better space
     else:
-        logging.debug("Using provided ax")
+        logging.info("Using provided ax")
 
     plt.tight_layout(pad=0.4, w_pad=0.5, h_pad=1.0)
 
     # Create a DataFrame with the x, y, and result columns
     try:
-        logging.debug("Creating DataFrame from x, y, and result labels")
+        logging.info("Creating DataFrame from x, y, and result labels")
         data = pd.DataFrame({'x': x, 'y': y, 'result': result_labels})
     except Exception as e:
         logging.error(f"Error while creating DataFrame: {e}")
@@ -141,7 +141,7 @@ def quadrant_chart(team_name, x, y, xtick_labels=None, ytick_labels=None, data_l
 
     # Group data and calculate necessary fields
     try:
-        logging.debug("Grouping data to identify duplicates and calculating win ratios")
+        logging.info("Grouping data to identify duplicates and calculating win ratios")
         group_data = data.groupby(['x', 'y', 'result']).size().unstack(fill_value=0).reset_index()
         group_data['total_count'] = group_data['W'] + group_data['L']
         group_data['win_ratio'] = group_data['W'] / group_data['total_count']
@@ -151,7 +151,7 @@ def quadrant_chart(team_name, x, y, xtick_labels=None, ytick_labels=None, data_l
 
     # Set limits for x and y axes
     try:
-        logging.debug("Setting x and y axis limits")
+        logging.info("Setting x and y axis limits")
         y_avg = data['y'].mean()
         x_avg = data['x'].mean()
 
@@ -169,13 +169,13 @@ def quadrant_chart(team_name, x, y, xtick_labels=None, ytick_labels=None, data_l
     # Set tick labels if provided
     try:
         if xtick_labels:
-            logging.debug("Setting custom x-axis tick labels")
+            logging.info("Setting custom x-axis tick labels")
             ax.set_xticks([lb_x, (x_avg - adj_x / 2), x_avg, (x_avg + adj_x / 2), ub_x])
             ax.set_xticklabels([np.round(lb_x, 2), np.round((x_avg - adj_x / 2), 2), np.round(x_avg, 2),
                                 np.round((x_avg + adj_x / 2), 2), np.round(ub_x, 2)])
 
         if ytick_labels:
-            logging.debug("Setting custom y-axis tick labels")
+            logging.info("Setting custom y-axis tick labels")
             ax.set_yticks([lb_y, (y_avg - adj_y / 2), y_avg, (y_avg + adj_y / 2), ub_y])
             ax.set_yticklabels([np.round(lb_y, 2), np.round((y_avg - adj_y / 2), 2), np.round(y_avg, 2),
                                 np.round((y_avg + adj_y / 2), 2), np.round(ub_y, 2)])
@@ -185,7 +185,7 @@ def quadrant_chart(team_name, x, y, xtick_labels=None, ytick_labels=None, data_l
 
     # Plot each point in the group_data with size based on total_count and color based on win_ratio
     try:
-        logging.debug("Plotting data points on scatter plot")
+        logging.info("Plotting data points on scatter plot")
         for index, row in group_data.iterrows():
             win_color = np.array(matplotlib.colors.to_rgb(nba_teams_colors[team_name][0]))  # Win color
             loss_color = np.array(matplotlib.colors.to_rgb(nba_teams_colors[team_name][1]))  # Loss color
@@ -200,7 +200,7 @@ def quadrant_chart(team_name, x, y, xtick_labels=None, ytick_labels=None, data_l
 
     # Add quadrant lines and league average markers
     try:
-        logging.debug("Adding quadrant lines and league average markers")
+        logging.info("Adding quadrant lines and league average markers")
         ax.axvline(x_avg, c='k', lw=1)
         ax.axhline(y_avg, c='k', lw=1)
     except Exception as e:
@@ -209,7 +209,7 @@ def quadrant_chart(team_name, x, y, xtick_labels=None, ytick_labels=None, data_l
 
     # Set labels and title
     try:
-        logging.debug("Setting axis labels and chart title")
+        logging.info("Setting axis labels and chart title")
         x_label = f'{team_name} {x.name.split(":")[0].replace("Home", "")}'  # Example: Miami Heat Rebounds
         y_label = f'{team_name} Opponent {y.name.split(":")[0].replace("Opponent", "")}'  # Example: Miami Heat Opponent Rebounds
         ax.set_xlabel(x_label, fontsize=14)
@@ -222,7 +222,7 @@ def quadrant_chart(team_name, x, y, xtick_labels=None, ytick_labels=None, data_l
 
     # Add custom legend
     try:
-        logging.debug("Adding custom legend")
+        logging.info("Adding custom legend")
         win_patch = plt.Line2D([0], [0], marker='o', color='w', markerfacecolor=nba_teams_colors[team_name][0], markersize=10, label='Win')
         loss_patch = plt.Line2D([0], [0], marker='o', color='w', markerfacecolor=nba_teams_colors[team_name][1], markersize=10, label='Loss')
         ax.legend(handles=[win_patch, loss_patch], loc='best', title="Game Results")
@@ -232,7 +232,7 @@ def quadrant_chart(team_name, x, y, xtick_labels=None, ytick_labels=None, data_l
 
     # Finalize plot adjustments
     try:
-        logging.debug("Finalizing plot and saving to buffer")
+        logging.info("Finalizing plot and saving to buffer")
         ax.set_facecolor('#999999')
         mplcursors.cursor(hover=True)
         fig.subplots_adjust(top=0.9, bottom=0.1, left=0.1, right=0.9)
