@@ -183,20 +183,38 @@ def quadrant_chart(team_name, x, y, xtick_labels=None, ytick_labels=None, data_l
         logging.error(f"Error while setting tick labels: {e}")
         raise e
 
-    # Plot each point in the group_data with size based on total_count and color based on win_ratio
     try:
-        logging.info("Plotting data points on scatter plot")
-        for index, row in group_data.iterrows():
-            win_color = np.array(matplotlib.colors.to_rgb(nba_teams_colors[team_name][0]))  # Win color
-            loss_color = np.array(matplotlib.colors.to_rgb(nba_teams_colors[team_name][1]))  # Loss color
-            mix_color = win_color * row['win_ratio'] + loss_color * (1 - row['win_ratio'])  # Mixed color
+        logging.info("Starting data preparation for scatter plot")
 
-            # Scatter plot with size proportional to total_count
-            ax.scatter(x=row['x'], y=row['y'], linewidth=0.5, edgecolor=nba_teams_colors[team_name][2],
-                       color=mix_color, s=20 + row['total_count'] * 10, zorder=99)
+        # Convert win_color and loss_color arrays into NumPy arrays
+        logging.info("Converting win_color and loss_color arrays to NumPy arrays")
+        win_colors = np.array([matplotlib.colors.to_rgb(nba_teams_colors[team_name][0])] * len(group_data))
+        loss_colors = np.array([matplotlib.colors.to_rgb(nba_teams_colors[team_name][1])] * len(group_data))
+
+        # Calculate mixed colors in a vectorized manner
+        logging.info("Calculating mixed colors based on win ratios")
+        win_ratios = group_data['win_ratio'].values
+        mixed_colors = win_colors * win_ratios[:, np.newaxis] + loss_colors * (1 - win_ratios[:, np.newaxis])
+
+        # Prepare x, y, size, and edgecolor arrays
+        logging.info("Preparing x, y, sizes, and edge_colors arrays for scatter plot")
+        x_vals = group_data['x'].values
+        y_vals = group_data['y'].values
+        sizes = 20 + group_data['total_count'].values * 10
+        edge_colors = [nba_teams_colors[team_name][2]] * len(group_data)
+
+        # Log before plotting
+        logging.info("Plotting all points at once with ax.scatter()")
+
+        # Single scatter plot call for all points
+        ax.scatter(x=x_vals, y=y_vals, linewidth=0.5, edgecolor=edge_colors, color=mixed_colors, s=sizes, zorder=99)
+
+        logging.info("Scatter plot completed successfully")
+
     except Exception as e:
         logging.error(f"Error while plotting data points: {e}")
         raise e
+
 
     # Add quadrant lines and league average markers
     try:
@@ -237,7 +255,7 @@ def quadrant_chart(team_name, x, y, xtick_labels=None, ytick_labels=None, data_l
         fig.subplots_adjust(top=0.9, bottom=0.1, left=0.1, right=0.9)
 
         buf = BytesIO()
-        plt.savefig(buf, format='png', dpi=100)
+        plt.savefig(buf, format='png', dpi=50)
         buf.seek(0)
         plt.close()
     except Exception as e:
