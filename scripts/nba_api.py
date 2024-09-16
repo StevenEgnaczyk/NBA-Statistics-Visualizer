@@ -234,11 +234,10 @@ def quadrant_chart(team_name, x, y, xtick_labels=None, ytick_labels=None, data_l
     try:
         logging.info("Finalizing plot and saving to buffer")
         ax.set_facecolor('#999999')
-        mplcursors.cursor(hover=True)
         fig.subplots_adjust(top=0.9, bottom=0.1, left=0.1, right=0.9)
 
         buf = BytesIO()
-        plt.savefig(buf, format='png', dpi=500)
+        plt.savefig(buf, format='png', dpi=100)
         buf.seek(0)
         plt.close()
     except Exception as e:
