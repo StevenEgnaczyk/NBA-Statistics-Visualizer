@@ -92,7 +92,7 @@ nba_teams_colors = {
     'Golden State Warriors': ['#006BB6', '#FDB927', '#FFFFFF'],
     'Houston Rockets': ['#CE1141', '#000000', '#A2A9AF'],
     'Indiana Pacers': ['#002D72', '#F7E03C', '#003F6C'],
-    'LA Clippers': ['#ED0A3F', '#002A5C', '#FFFFFF'],
+    'Los Angeles Clippers': ['#ED0A3F', '#002A5C', '#FFFFFF'],
     'Los Angeles Lakers': ['#552583', '#F1C40F', '#FFFFFF'],
     'Memphis Grizzlies': ['#5D76A9', '#121F3E', '#7F8C8D'],
     'Miami Heat': ['#98002E', '#F9A01B', '#000000'],
