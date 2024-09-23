@@ -21,7 +21,7 @@ except ImportError:
     DEBUG_STORAGE = False
 
 PROXY_LIST = [
-    "http://svtjzbxz:0jyrx9wg7jt1@173.0.9.209:5792",
+    "http://svtjzbxz:0jyrx9wg7jt1@207.244.217.165:6712",
 ]
 
 
